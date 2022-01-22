@@ -3,7 +3,7 @@ package org.test.piano.dto;
 public enum Answer {
 
     SUCCESS("Директория успешно установлена"),
-    NOT_FOUND("Директория не найдена"),
+    NOT_FOUND("Директория не найдена. Возможно, доступ к ней запрещен или такая папка не существует"),
     EMPTY("Вы ввели пустое значение");
 
     private String value;

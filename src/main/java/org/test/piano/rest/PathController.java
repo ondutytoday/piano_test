@@ -8,8 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import org.test.piano.dto.Answer;
 import org.test.piano.dto.ResponseDto;
 import org.test.piano.dto.StatsDto;
+import org.test.piano.service.FileReadingService;
 import org.test.piano.service.FileWatchingService;
 import org.test.piano.service.PathService;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 @RestController
@@ -18,6 +23,7 @@ public class PathController {
 
     private final PathService pathService;
     private final FileWatchingService fileWatchingService;
+    private final FileReadingService fileReadingService;
 
     @GetMapping(value = "/result")
     public ResponseEntity<StatsDto> getResult() {
@@ -35,7 +41,13 @@ public class PathController {
         }
         //нужно передать в экзекьютор, чтобы крутилось в отдельном треде
         //предусмотреть отключение предыдущего вочера
-        fileWatchingService.startWatching(path);
+        //fileWatchingService.startWatching(path);
+        try {
+            List<Path> pathss = pathService.getFilesFromDirectory(path);
+            fileReadingService.readFiles(pathss);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return new ResponseEntity<>(new ResponseDto(Answer.SUCCESS.getValue()), HttpStatus.OK);
     }
 }
