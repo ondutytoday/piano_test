@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.test.piano.dto.Answer;
 import org.test.piano.dto.ResponseDto;
 import org.test.piano.dto.StatsDto;
+import org.test.piano.service.FileWatchingService;
 import org.test.piano.service.PathService;
 
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -16,6 +17,7 @@ import org.test.piano.service.PathService;
 public class PathController {
 
     private final PathService pathService;
+    private final FileWatchingService fileWatchingService;
 
     @GetMapping(value = "/result")
     public ResponseEntity<StatsDto> getResult() {
@@ -31,7 +33,9 @@ public class PathController {
         if(!isExist) {
             return new ResponseEntity<>(new ResponseDto(Answer.NOT_FOUND.getValue()), HttpStatus.BAD_REQUEST);
         }
-        //здесь отправляю директорию в слушатель
+        //нужно передать в экзекьютор, чтобы крутилось в отдельном треде
+        //предусмотреть отключение предыдущего вочера
+        fileWatchingService.startWatching(path);
         return new ResponseEntity<>(new ResponseDto(Answer.SUCCESS.getValue()), HttpStatus.OK);
     }
 }
