@@ -1,14 +1,13 @@
 package org.test.piano.service.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.test.piano.dto.StatsDto;
 import org.test.piano.service.FileReadingService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -19,45 +18,68 @@ import java.util.stream.Collectors;
 @Service
 public class FileReadingServiceImpl implements FileReadingService {
 
-    //вероятно можно использовать сет
-    Set<Path> fileNames = new HashSet<>();
+    Set<Path> fileNames = new TreeSet<>();
     Map<String, Long> result = new ConcurrentSkipListMap<>();
 
     @Override
     public void readFiles(List<Path> files) {
-        fileNames.addAll(files
+
+        List<Path> filesToAdd = excludeSameFiles(files);
+        fileNames.addAll(filesToAdd
                 .stream()
                 .map(Path::getFileName)
                 .collect(Collectors.toSet()));
 
-        files.parallelStream().forEach(this::scanFile);
-        log.info(fileNames.toString());
-        log.info(result.toString());
+        filesToAdd.parallelStream().forEach(this::scanFile);
+
+        //вывод логов в консоль для первой части задания
+        log.info("Files: {}", fileNames
+                .stream()
+                .map(Path::toString)
+                .collect(Collectors.joining(", ")));
+
+        log.info("Stats:\n{}", result
+                .entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + "," + entry.getValue() + ",")
+                .collect(Collectors.joining("\n")));
+    }
+
+    @Override
+    public StatsDto getStats() {
+        List<String> files = fileNames
+                .stream()
+                .map(Path::toString)
+                .collect(Collectors.toList());
+        List<String> stats = result
+                .entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + "," + entry.getValue() + ",")
+                .collect(Collectors.toList());
+        return new StatsDto(files, stats);
+    }
+
+    private List<Path> excludeSameFiles(List<Path> files) {
+        return files.stream()
+                .filter(file -> !fileNames.contains(file.getFileName()))
+                .collect(Collectors.toList());
     }
 
     private void scanFile(Path file) {
-        try (BufferedReader reader = Files.newBufferedReader(file, Charset.forName("UTF-8"))) {
+        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             String line;
             while ((line = reader.readLine()) != null) {
-                Pair pair = getPair(line);
-                result.merge(pair.key, pair.value, Long::sum);
+                if (isValid(line)) {
+                    String[] pair = line.split(",");
+                    result.merge(pair[0], Long.parseLong(pair[1]), Long::sum);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private Pair getPair(String line) {
-        //нужна валидация стринги
-        String[] values = line.split(",");
-        Pair pair = new Pair(values[0], Long.parseLong(values[1]));
-        return pair;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    private class Pair {
-        private String key;
-        private Long value;
+    private boolean isValid(String line) {
+        return line.matches("\\w+,\\d+,");
     }
 }

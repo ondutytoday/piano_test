@@ -27,7 +27,8 @@ public class PathController {
 
     @GetMapping(value = "/result")
     public ResponseEntity<StatsDto> getResult() {
-        return new ResponseEntity<>(new StatsDto(), HttpStatus.OK);
+        StatsDto statsDto = fileReadingService.getStats();
+        return new ResponseEntity<>(statsDto, HttpStatus.OK);
     }
 
     @PostMapping(value = "/path")

@@ -22,6 +22,7 @@ public class PathServiceImpl implements PathService {
         return Files.isReadable(path) && Files.isDirectory(path);
     }
 
+    @Override
     public List<Path> getFilesFromDirectory(String pathString) throws IOException {
         List<Path> list = Files.list(Paths.get(pathString))
                 .filter(Files::isRegularFile)
@@ -29,5 +30,10 @@ public class PathServiceImpl implements PathService {
                 .collect(Collectors.toUnmodifiableList());
         log.info("Files for analyzing: {}", list);
         return list;
+    }
+
+    @Override
+    public boolean isPathMatches (String pathString) {
+        return pathMatcher.matches(Paths.get(pathString).getFileName());
     }
 }

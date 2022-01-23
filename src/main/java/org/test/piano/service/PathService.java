@@ -8,6 +8,8 @@ public interface PathService {
 
     boolean isDirectoryExist (String pathString);
 
+    boolean isPathMatches (String pathString);
+
     List<Path> getFilesFromDirectory(String pathString) throws IOException;
 
 }
