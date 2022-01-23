@@ -10,4 +10,6 @@ public interface FileReadingService {
     void readFiles(List<Path> files);
 
     StatsDto getStats();
+
+    void clearPreviousResult();
 }

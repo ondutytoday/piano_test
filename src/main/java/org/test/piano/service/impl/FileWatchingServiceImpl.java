@@ -8,36 +8,57 @@ import org.test.piano.service.FileReadingService;
 import org.test.piano.service.FileWatchingService;
 import org.test.piano.service.PathService;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FileWatchingServiceImpl implements FileWatchingService {
 
-    private final WatchService watchService;
+    private WatchService watchService;
+    private Map<WatchKey, Path> keys;
     private final PathService pathService;
     private final FileReadingService fileReadingService;
+
+
+    @PostConstruct
+    private void init() throws IOException {
+        watchService = FileSystems.getDefault().newWatchService();
+    }
 
     @Async
     @Override
     public void startWatching(String pathString) throws IOException {
-        try {
-            log.info("Set folder {} in watching service", pathString);
-            Path path = Paths.get(pathString);
-            path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
+        log.info("Set folder {} in watching service", pathString);
+        Path path = Paths.get(pathString);
+        register(path);
+        processEvents();
+    }
 
-            WatchKey key;
+    private void register(Path path) throws IOException {
+        WatchKey key = path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
+        keys = Collections.singletonMap(key, path);
+    }
+
+    private void processEvents() {
+        try {
             log.info("Start watching");
+            WatchKey key;
             while ((key = watchService.take()) != null) {
-                for (WatchEvent<?> event : key.pollEvents()) {
-                    log.info("Event kind: {}; File affected: {}", event.kind(), event.context());
-                    String newFileName = event.context().toString();
-                    if (pathService.isPathMatches(newFileName)) {
-                        fileReadingService.readFiles(List.of(path.resolve(newFileName)));
+                Path path = keys.get(key);
+                if (path != null) {
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        log.info("Event kind: {}; File affected: {}", event.kind(), event.context());
+                        String newFileName = event.context().toString();
+                        if (pathService.isPathMatches(newFileName)) {
+                            fileReadingService.readFiles(List.of(path.resolve(newFileName)));
+                        }
                     }
                 }
                 key.reset();

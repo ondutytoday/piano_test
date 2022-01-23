@@ -18,7 +18,7 @@ public class PathServiceImpl implements PathService {
     @Override
     public boolean isDirectoryExist(String pathString) {
         Path path = Paths.get(pathString);
-        log.info("Path for watching: {}", path);
+        log.info("Checking path for watching: {}", path);
         return Files.isReadable(path) && Files.isDirectory(path);
     }
 

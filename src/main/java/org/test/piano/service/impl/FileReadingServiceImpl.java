@@ -60,6 +60,12 @@ public class FileReadingServiceImpl implements FileReadingService {
         return new StatsDto(files, stats);
     }
 
+    @Override
+    public void clearPreviousResult() {
+        fileNames.clear();
+        result.clear();
+    }
+
     private List<Path> excludeSameFiles(List<Path> files) {
         return files.stream()
                 .filter(file -> !fileNames.contains(file.getFileName()))
