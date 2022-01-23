@@ -1,20 +1,18 @@
 package org.test.piano.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.test.piano.dto.Answer;
+import org.test.piano.dto.PathEventArgs;
 import org.test.piano.dto.ResponseDto;
 import org.test.piano.dto.StatsDto;
 import org.test.piano.service.FileReadingService;
-import org.test.piano.service.FileWatchingService;
 import org.test.piano.service.PathService;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 @RestController
@@ -22,8 +20,8 @@ import java.util.List;
 public class PathController {
 
     private final PathService pathService;
-    private final FileWatchingService fileWatchingService;
     private final FileReadingService fileReadingService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @GetMapping(value = "/result")
     public ResponseEntity<StatsDto> getResult() {
@@ -40,15 +38,7 @@ public class PathController {
         if(!isExist) {
             return new ResponseEntity<>(new ResponseDto(Answer.NOT_FOUND.getValue()), HttpStatus.BAD_REQUEST);
         }
-        //нужно передать в экзекьютор, чтобы крутилось в отдельном треде
-        //предусмотреть отключение предыдущего вочера
-        //fileWatchingService.startWatching(path);
-        try {
-            List<Path> pathss = pathService.getFilesFromDirectory(path);
-            fileReadingService.readFiles(pathss);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        applicationEventPublisher.publishEvent(new PathEventArgs(path));
         return new ResponseEntity<>(new ResponseDto(Answer.SUCCESS.getValue()), HttpStatus.OK);
     }
 }

@@ -12,13 +12,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FileReadingServiceImpl implements FileReadingService {
 
-    Set<Path> fileNames = new TreeSet<>();
+    Set<Path> fileNames = new ConcurrentSkipListSet<>();
     Map<String, Long> result = new ConcurrentSkipListMap<>();
 
     @Override

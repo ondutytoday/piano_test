@@ -2,6 +2,7 @@ package org.test.piano.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.test.piano.service.FileReadingService;
 import org.test.piano.service.FileWatchingService;
@@ -21,12 +22,9 @@ public class FileWatchingServiceImpl implements FileWatchingService {
     private final PathService pathService;
     private final FileReadingService fileReadingService;
 
+    @Async
     @Override
-    public void startWatching(String pathString) {
-        start(pathString);
-    }
-
-    private void start(String pathString) {
+    public void startWatching(String pathString) throws IOException {
         try {
             log.info("Set folder {} in watching service", pathString);
             Path path = Paths.get(pathString);
@@ -39,27 +37,21 @@ public class FileWatchingServiceImpl implements FileWatchingService {
                     log.info("Event kind: {}; File affected: {}", event.kind(), event.context());
                     String newFileName = event.context().toString();
                     if (pathService.isPathMatches(newFileName)) {
-                        fileReadingService.readFiles(List.of(Paths.get(newFileName)));
+                        fileReadingService.readFiles(List.of(path.resolve(newFileName)));
                     }
                 }
                 key.reset();
             }
         } catch (InterruptedException e) {
             log.warn("Watching was interrupted");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     @PreDestroy
-    private void stopWatching() {
+    private void stopWatching() throws IOException {
         log.info("stop watching");
         if (watchService != null) {
-            try {
-                watchService.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            watchService.close();
         }
     }
 }
