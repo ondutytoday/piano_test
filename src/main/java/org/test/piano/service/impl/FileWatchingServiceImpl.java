@@ -52,13 +52,11 @@ public class FileWatchingServiceImpl implements FileWatchingService {
             WatchKey key;
             while ((key = watchService.take()) != null && keys.containsKey(key)) {
                 Path path = keys.get(key);
-                if (path != null) {
-                    for (WatchEvent<?> event : key.pollEvents()) {
-                        log.info("Event kind: {}; File affected: {}", event.kind(), event.context());
-                        String newFileName = event.context().toString();
-                        if (pathService.isPathMatches(newFileName)) {
-                            fileReadingService.readFiles(List.of(path.resolve(newFileName)));
-                        }
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    log.info("Event kind: {}; File affected: {}", event.kind(), event.context());
+                    String newFileName = event.context().toString();
+                    if (pathService.isPathMatches(newFileName)) {
+                        fileReadingService.readFiles(List.of(path.resolve(newFileName)));
                     }
                 }
                 key.reset();
