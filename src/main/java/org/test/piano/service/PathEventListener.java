@@ -19,8 +19,8 @@ public class PathEventListener {
 
     @EventListener
     public void onPathAdd(PathEventArgs event) throws IOException {
-        fileReadingService.clearPreviousResult();
         fileWatchingService.startWatching(event.getPath());
+        fileReadingService.clearPreviousResult();
         List<Path> filesToScan = pathService.getFilesFromDirectory(event.getPath());
         fileReadingService.readFiles(filesToScan);
     }

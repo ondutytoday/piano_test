@@ -50,7 +50,7 @@ public class FileWatchingServiceImpl implements FileWatchingService {
         try {
             log.info("Start watching");
             WatchKey key;
-            while ((key = watchService.take()) != null) {
+            while ((key = watchService.take()) != null && keys.containsKey(key)) {
                 Path path = keys.get(key);
                 if (path != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
